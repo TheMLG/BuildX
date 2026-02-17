@@ -3,9 +3,10 @@ import { TAX_RATE } from "@/data/cartData";
 interface OrderSummaryProps {
   subtotal: number;
   itemCount: number;
+  onCheckout: () => void;
 }
 
-const OrderSummary = ({ subtotal, itemCount }: OrderSummaryProps) => {
+const OrderSummary = ({ subtotal, itemCount, onCheckout }: OrderSummaryProps) => {
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
@@ -23,7 +24,10 @@ const OrderSummary = ({ subtotal, itemCount }: OrderSummaryProps) => {
               {itemCount} items • Tax: ${tax.toFixed(2)}
             </p>
           </div>
-          <button className="ml-3 rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-soft transition-all duration-200 hover:opacity-90 active:scale-[0.98]">
+          <button 
+            onClick={onCheckout}
+            className="ml-3 rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-soft transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
+          >
             Checkout
           </button>
         </div>
@@ -51,7 +55,10 @@ const OrderSummary = ({ subtotal, itemCount }: OrderSummaryProps) => {
           </div>
         </div>
 
-        <button className="mt-6 w-full rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-all duration-200 hover:opacity-90 hover:shadow-elevated active:scale-[0.98]">
+        <button 
+          onClick={onCheckout}
+          className="mt-6 w-full rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-all duration-200 hover:opacity-90 hover:shadow-elevated active:scale-[0.98]"
+        >
           Checkout
         </button>
 

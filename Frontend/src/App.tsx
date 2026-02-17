@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import Test from "./pages/Test";
 import Admin from "./pages/Admin";
 import AdminCartQR from "./pages/AdminCartQR";
+import OrderConfirmation from "./pages/OrderConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/cart/:cartId" element={<Index />} />
+          <Route path="/order/:orderId" element={<OrderConfirmation />} />
           <Route path="/test" element={<Test />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/cart-qr" element={<AdminCartQR />} />

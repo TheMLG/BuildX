@@ -22,7 +22,7 @@ const AdminCartQR = () => {
 
   const adminUsername = import.meta.env.VITE_ADMIN_USERNAME || "admin";
   const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
-  const baseUrl = window.location.origin;
+  const baseUrl = "https://build-x-nine.vercel.app" || window.location.origin;
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   useEffect(() => {

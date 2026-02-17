@@ -5,9 +5,11 @@ import CartItemCard from "@/components/CartItemCard";
 import OrderSummary from "@/components/OrderSummary";
 import EmptyCart from "@/components/EmptyCart";
 import CartSkeleton from "@/components/CartSkeleton";
+import CheckoutDialog, { CustomerInfo } from "@/components/CheckoutDialog";
 import { CartItem } from "@/data/cartData";
+import { useToast } from "@/hooks/use-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 interface CartResponse {
   success: boolean;
@@ -32,10 +34,13 @@ interface CartResponse {
 const Index = () => {
   const { cartId } = useParams<{ cartId?: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentCartId, setCurrentCartId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   // If no cartId in URL, show error message
   useEffect(() => {
@@ -102,6 +107,60 @@ const Index = () => {
     setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const handleCheckoutClick = () => {
+    setCheckoutDialogOpen(true);
+  };
+
+  const handleCheckoutSubmit = async (customerInfo: CustomerInfo) => {
+    setCheckoutLoading(true);
+    
+    try {
+      // Create order with customer info
+      const response = await fetch(`${API_URL}/api/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cartId: currentCartId,
+          customerInfo,
+          paymentInfo: {
+            method: "cash", // Default payment method
+            status: "pending",
+          },
+          notes: "",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to create order");
+      }
+
+      // Close dialog
+      setCheckoutDialogOpen(false);
+
+      // Show success toast
+      toast({
+        title: "Order Created!",
+        description: `Your order ${result.data.orderId} has been created successfully.`,
+      });
+
+      // Navigate to order confirmation page
+      navigate(`/order/${result.data.orderId}`);
+    } catch (err) {
+      console.error("Error creating order:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to create order",
+      });
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   const { subtotal, itemCount } = useMemo(() => {
     return items.reduce(
       (acc, item) => ({
@@ -158,11 +217,23 @@ const Index = () => {
           {/* Summary */}
           {!loading && items.length > 0 && (
             <aside className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-sm p-3 shadow-lg md:relative md:border-0 md:bg-transparent md:backdrop-blur-none md:p-0 md:shadow-none lg:sticky lg:top-8 lg:self-start">
-              <OrderSummary subtotal={subtotal} itemCount={itemCount} />
+              <OrderSummary 
+                subtotal={subtotal} 
+                itemCount={itemCount} 
+                onCheckout={handleCheckoutClick}
+              />
             </aside>
           )}
         </div>
       </main>
+
+      {/* Checkout Dialog */}
+      <CheckoutDialog
+        open={checkoutDialogOpen}
+        onOpenChange={setCheckoutDialogOpen}
+        onSubmit={handleCheckoutSubmit}
+        isLoading={checkoutLoading}
+      />
     </div>
   );
 };
