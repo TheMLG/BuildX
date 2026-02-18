@@ -7,6 +7,8 @@ import {
   updatePaymentStatus,
   deleteOrder,
   getOrdersByCustomer,
+  downloadBillPDF,
+  emailBill,
 } from '../controllers/order.controller.js';
 
 const router = express.Router();
@@ -22,6 +24,12 @@ router.get('/:orderId', getOrderById);
 
 // Get orders by customer email
 router.get('/customer/:email', getOrdersByCustomer);
+
+// Download PDF bill
+router.get('/:orderId/download-bill', downloadBillPDF);
+
+// Send bill via email
+router.post('/:orderId/email-bill', emailBill);
 
 // Update order status
 router.patch('/:orderId/status', updateOrderStatus);

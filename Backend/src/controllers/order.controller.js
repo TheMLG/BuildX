@@ -3,6 +3,8 @@ import Cart from '../models/Cart.model.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
+import { generateBillPDF } from '../utils/pdfGenerator.js';
+import { sendBillEmail } from '../utils/emailService.js';
 
 // Create order from cart
 export const createOrder = asyncHandler(async (req, res) => {
@@ -180,3 +182,62 @@ export const getOrdersByCustomer = asyncHandler(async (req, res) => {
     new ApiResponse(200, orders, 'Orders fetched successfully')
   );
 });
+
+// Generate and download PDF bill
+export const downloadBillPDF = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+
+  if (!orderId) {
+    throw new ApiError(400, 'Order ID is required');
+  }
+
+  const order = await Order.findOne({ orderId });
+
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  // Set response headers for PDF download
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename=Invoice_${orderId}.pdf`);
+
+  // Generate PDF and pipe to response
+  await generateBillPDF(order, res);
+});
+
+// Send bill via email
+export const emailBill = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+
+  if (!orderId) {
+    throw new ApiError(400, 'Order ID is required');
+  }
+
+  const order = await Order.findOne({ orderId });
+
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  // Generate PDF in memory
+  const chunks = [];
+  const { Writable } = await import('stream');
+  
+  const bufferStream = new Writable({
+    write(chunk, encoding, callback) {
+      chunks.push(chunk);
+      callback();
+    },
+  });
+
+  await generateBillPDF(order, bufferStream);
+  const pdfBuffer = Buffer.concat(chunks);
+
+  // Send email with PDF attachment
+  await sendBillEmail(order, pdfBuffer);
+
+  res.status(200).json(
+    new ApiResponse(200, null, `Bill sent successfully to ${order.customerInfo.email}`)
+  );
+});
+

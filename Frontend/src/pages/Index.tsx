@@ -6,10 +6,19 @@ import OrderSummary from "@/components/OrderSummary";
 import EmptyCart from "@/components/EmptyCart";
 import CartSkeleton from "@/components/CartSkeleton";
 import CheckoutDialog, { CustomerInfo } from "@/components/CheckoutDialog";
+import PaymentSuccessDialog from "@/components/PaymentSuccessDialog";
 import { CartItem } from "@/data/cartData";
 import { useToast } from "@/hooks/use-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_your_key_id";
+
+// Razorpay type declaration
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 interface CartResponse {
   success: boolean;
@@ -41,6 +50,9 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [paymentSuccessDialogOpen, setPaymentSuccessDialogOpen] = useState(false);
+  const [completedOrderId, setCompletedOrderId] = useState<string>("");
+  const [customerEmail, setCustomerEmail] = useState<string>("");
 
   // If no cartId in URL, show error message
   useEffect(() => {
@@ -113,10 +125,11 @@ const Index = () => {
 
   const handleCheckoutSubmit = async (customerInfo: CustomerInfo) => {
     setCheckoutLoading(true);
+    setCustomerEmail(customerInfo.email);
     
     try {
-      // Create order with customer info
-      const response = await fetch(`${API_URL}/api/orders`, {
+      // Step 1: Create order in database
+      const orderResponse = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -125,38 +138,126 @@ const Index = () => {
           cartId: currentCartId,
           customerInfo,
           paymentInfo: {
-            method: "cash", // Default payment method
+            method: "razorpay",
             status: "pending",
           },
           notes: "",
         }),
       });
 
-      const result = await response.json();
+      const orderResult = await orderResponse.json();
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to create order");
+      if (!orderResponse.ok || !orderResult.success) {
+        throw new Error(orderResult.message || "Failed to create order");
       }
 
-      // Close dialog
-      setCheckoutDialogOpen(false);
+      const createdOrder = orderResult.data;
 
-      // Show success toast
-      toast({
-        title: "Order Created!",
-        description: `Your order ${result.data.orderId} has been created successfully.`,
+      // Step 2: Create Razorpay order
+      const razorpayOrderResponse = await fetch(`${API_URL}/api/payment/create-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: createdOrder.totalAmount,
+          currency: "INR",
+          receipt: createdOrder.orderId,
+          notes: {
+            orderId: createdOrder.orderId,
+            cartId: currentCartId,
+          },
+        }),
       });
 
-      // Navigate to order confirmation page
-      navigate(`/order/${result.data.orderId}`);
+      const razorpayOrderResult = await razorpayOrderResponse.json();
+
+      if (!razorpayOrderResponse.ok || !razorpayOrderResult.success) {
+        throw new Error(razorpayOrderResult.message || "Failed to create Razorpay order");
+      }
+
+      const razorpayOrder = razorpayOrderResult.data;
+
+      // Step 3: Open Razorpay checkout
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: "BuildX Store",
+        description: `Order ${createdOrder.orderId}`,
+        order_id: razorpayOrder.id,
+        handler: async function (response: any) {
+          try {
+            // Step 4: Verify payment
+            const verifyResponse = await fetch(`${API_URL}/api/payment/verify`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: createdOrder.orderId,
+              }),
+            });
+
+            const verifyResult = await verifyResponse.json();
+
+            if (!verifyResponse.ok || !verifyResult.success) {
+              throw new Error(verifyResult.message || "Payment verification failed");
+            }
+
+            // Close checkout dialog
+            setCheckoutDialogOpen(false);
+            setCheckoutLoading(false);
+
+            // Show payment success dialog
+            setCompletedOrderId(createdOrder.orderId);
+            setPaymentSuccessDialogOpen(true);
+
+            toast({
+              title: "Payment Successful!",
+              description: "Your order has been confirmed.",
+            });
+          } catch (error) {
+            console.error("Payment verification error:", error);
+            toast({
+              variant: "destructive",
+              title: "Payment Verification Failed",
+              description: error instanceof Error ? error.message : "Failed to verify payment",
+            });
+            setCheckoutLoading(false);
+          }
+        },
+        prefill: {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          contact: customerInfo.phone,
+        },
+        theme: {
+          color: "#4F46E5",
+        },
+        modal: {
+          ondismiss: function () {
+            setCheckoutLoading(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "You cancelled the payment process.",
+            });
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
     } catch (err) {
-      console.error("Error creating order:", err);
+      console.error("Error during checkout:", err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to create order",
+        description: err instanceof Error ? err.message : "Failed to process checkout",
       });
-    } finally {
       setCheckoutLoading(false);
     }
   };
@@ -233,6 +334,18 @@ const Index = () => {
         onOpenChange={setCheckoutDialogOpen}
         onSubmit={handleCheckoutSubmit}
         isLoading={checkoutLoading}
+      />
+
+      {/* Payment Success Dialog */}
+      <PaymentSuccessDialog
+        open={paymentSuccessDialogOpen}
+        onOpenChange={setPaymentSuccessDialogOpen}
+        orderId={completedOrderId}
+        customerEmail={customerEmail}
+        onViewOrder={() => {
+          setPaymentSuccessDialogOpen(false);
+          navigate(`/order/${completedOrderId}`);
+        }}
       />
     </div>
   );

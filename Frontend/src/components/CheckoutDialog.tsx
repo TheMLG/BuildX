@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 interface CheckoutDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (customerInfo: CustomerInfo) => void;
+  onSubmit: (customerInfo: CustomerInfo) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -22,6 +22,13 @@ export interface CustomerInfo {
   name: string;
   email: string;
   phone: string;
+}
+
+// Razorpay type declaration
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
 }
 
 const CheckoutDialog = ({ open, onOpenChange, onSubmit, isLoading = false }: CheckoutDialogProps) => {
@@ -56,11 +63,11 @@ const CheckoutDialog = ({ open, onOpenChange, onSubmit, isLoading = false }: Che
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      onSubmit(formData);
+      await onSubmit(formData);
     }
   };
 
@@ -78,7 +85,7 @@ const CheckoutDialog = ({ open, onOpenChange, onSubmit, isLoading = false }: Che
         <DialogHeader>
           <DialogTitle>Customer Information</DialogTitle>
           <DialogDescription>
-            Please enter your details to complete the checkout process.
+            Please enter your details to proceed with payment.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -123,7 +130,7 @@ const CheckoutDialog = ({ open, onOpenChange, onSubmit, isLoading = false }: Che
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+1 (555) 123-4567"
+                placeholder="+91 9876543210"
                 value={formData.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
                 disabled={isLoading}
@@ -144,7 +151,7 @@ const CheckoutDialog = ({ open, onOpenChange, onSubmit, isLoading = false }: Che
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Processing..." : "Continue to Order"}
+              {isLoading ? "Processing..." : "Proceed to Payment"}
             </Button>
           </DialogFooter>
         </form>
