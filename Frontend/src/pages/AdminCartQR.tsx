@@ -46,6 +46,14 @@ const AdminCartQR = () => {
         },
       });
 
+      // Handle non-JSON responses (like 404 HTML pages)
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.warn("Backend endpoint not available, starting with empty cart list");
+        setGeneratedCarts([]);
+        return;
+      }
+
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -55,14 +63,13 @@ const AdminCartQR = () => {
           createdAt: new Date(cart.createdAt),
         }));
         setGeneratedCarts(carts);
+      } else {
+        setGeneratedCarts([]);
       }
     } catch (error) {
       console.error("Error loading carts:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load carts from database",
-        variant: "destructive",
-      });
+      // Don't show error toast, just start with empty list
+      setGeneratedCarts([]);
     }
   };
 
