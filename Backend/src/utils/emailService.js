@@ -18,6 +18,13 @@ const createTransporter = () => {
 
 export const sendBillEmail = async (order, pdfBuffer) => {
   try {
+    // Check if email is configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email credentials not configured. Skipping email send.');
+      console.log(`Would have sent bill to: ${order.customerInfo.email}`);
+      return { messageId: 'skipped-no-credentials' };
+    }
+
     const transporter = createTransporter();
 
     const mailOptions = {
@@ -88,13 +95,25 @@ export const sendBillEmail = async (order, pdfBuffer) => {
     console.log('Email sent:', info.messageId);
     return info;
   } catch (error) {
-    console.error('Error sending email:', error);
-    throw error;
+    console.error('Error sending email:', error.message);
+    console.error('Email config - Host:', process.env.EMAIL_HOST || 'smtp.gmail.com');
+    console.error('Email config - Port:', process.env.EMAIL_PORT || '587');
+    console.error('Email config - User:', process.env.EMAIL_USER || 'not configured');
+    // Don't throw error, just log it and continue
+    console.log('Email sending failed but continuing...');
+    return { messageId: 'failed', error: error.message };
   }
 };
 
 export const sendOrderConfirmationEmail = async (order) => {
   try {
+    // Check if email is configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email credentials not configured. Skipping confirmation email.');
+      console.log(`Would have sent confirmation to: ${order.customerInfo.email}`);
+      return { messageId: 'skipped-no-credentials' };
+    }
+
     const transporter = createTransporter();
 
     const mailOptions = {
@@ -131,7 +150,12 @@ export const sendOrderConfirmationEmail = async (order) => {
     const info = await transporter.sendMail(mailOptions);
     return info;
   } catch (error) {
-    console.error('Error sending confirmation email:', error);
-    throw error;
+    console.error('Error sending confirmation email:', error.message);
+    console.error('Email config - Host:', process.env.EMAIL_HOST || 'smtp.gmail.com');
+    console.error('Email config - Port:', process.env.EMAIL_PORT || '587');
+    console.error('Email config - User:', process.env.EMAIL_USER || 'not configured');
+    // Don't throw error, just log it and continue
+    console.log('Confirmation email failed but continuing...');
+    return { messageId: 'failed', error: error.message };
   }
 };
