@@ -13,22 +13,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS Configuration - supports both localhost and deployed environments
-const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-
-// Middleware
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: ['https://build-x-nine.vercel.app','http://localhost:5173'], 
+  credentials: true, 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Set-Cookie', 'Cookie', 'X-Requested-With'],
+}));  
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Connect to MongoDB
-connectDB();
-
 // Routes
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
@@ -46,6 +39,9 @@ app.use((err, req, res, next) => {
     errors: err.errors || []
   });
 });
+
+// Connect to MongoDB
+connectDB();
 
 // Start server
 app.listen(PORT, () => {
