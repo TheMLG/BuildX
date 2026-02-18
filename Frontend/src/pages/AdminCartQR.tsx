@@ -30,26 +30,40 @@ const AdminCartQR = () => {
     const loggedIn = sessionStorage.getItem("adminAuthenticated");
     if (loggedIn === "true") {
       setIsAuthenticated(true);
-      loadSavedCarts();
+      loadCartsFromDatabase();
     } else {
       // Redirect to admin page if not logged in
       window.location.href = "/admin";
     }
   }, []);
 
-  const loadSavedCarts = () => {
-    const saved = localStorage.getItem("generatedCarts");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setGeneratedCarts(parsed.map((cart: any) => ({
-        ...cart,
-        createdAt: new Date(cart.createdAt)
-      })));
-    }
-  };
+  const loadCartsFromDatabase = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/cart`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-  const saveCarts = (carts: GeneratedCart[]) => {
-    localStorage.setItem("generatedCarts", JSON.stringify(carts));
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const carts = result.data.map((cart: any) => ({
+          cartId: cart.cartId,
+          url: `${baseUrl}/cart/${cart.cartId}`,
+          createdAt: new Date(cart.createdAt),
+        }));
+        setGeneratedCarts(carts);
+      }
+    } catch (error) {
+      console.error("Error loading carts:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load carts from database",
+        variant: "destructive",
+      });
+    }
   };
 
   const generateCartId = () => {
@@ -90,7 +104,7 @@ const AdminCartQR = () => {
         throw new Error(result.message || "Failed to create cart");
       }
 
-      // Save cart to local storage
+      // Add cart to local state
       const newCart: GeneratedCart = {
         cartId,
         url,
@@ -99,7 +113,6 @@ const AdminCartQR = () => {
 
       const updatedCarts = [newCart, ...generatedCarts];
       setGeneratedCarts(updatedCarts);
-      saveCarts(updatedCarts);
       setCustomCartId("");
 
       toast({
@@ -161,17 +174,40 @@ const AdminCartQR = () => {
     URL.revokeObjectURL(url);
   };
 
-  const deleteCart = (cartId: string) => {
-    if (!confirm("Are you sure you want to delete this QR code?")) return;
+  const deleteCart = async (cartId: string) => {
+    if (!confirm("Are you sure you want to delete this QR code and cart?")) return;
 
-    const updatedCarts = generatedCarts.filter(cart => cart.cartId !== cartId);
-    setGeneratedCarts(updatedCarts);
-    saveCarts(updatedCarts);
+    try {
+      // Delete cart from database
+      const response = await fetch(`${apiUrl}/api/cart/${cartId}/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    toast({
-      title: "Deleted",
-      description: "Cart QR code deleted",
-    });
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || "Failed to delete cart");
+      }
+
+      // Remove from local state
+      const updatedCarts = generatedCarts.filter(cart => cart.cartId !== cartId);
+      setGeneratedCarts(updatedCarts);
+
+      toast({
+        title: "Deleted",
+        description: "Cart and QR code deleted successfully",
+      });
+    } catch (error: any) {
+      console.error("Error deleting cart:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete cart from database",
+        variant: "destructive",
+      });
+    }
   };
 
   const copyToClipboard = (text: string) => {

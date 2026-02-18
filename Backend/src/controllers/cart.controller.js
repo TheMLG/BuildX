@@ -193,3 +193,33 @@ export const createCart = asyncHandler(async (req, res) => {
     new ApiResponse(201, cart, 'Cart created successfully')
   );
 });
+
+// Get all carts (admin only)
+export const getAllCarts = asyncHandler(async (req, res) => {
+  const carts = await Cart.find()
+    .select('cartId status totalAmount createdAt updatedAt')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json(
+    new ApiResponse(200, carts, 'All carts fetched successfully')
+  );
+});
+
+// Delete a cart by cartId (admin only)
+export const deleteCart = asyncHandler(async (req, res) => {
+  const { cartId } = req.params;
+
+  if (!cartId) {
+    throw new ApiError(400, 'Cart ID is required');
+  }
+
+  const cart = await Cart.findOneAndDelete({ cartId });
+
+  if (!cart) {
+    throw new ApiError(404, 'Cart not found');
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, null, 'Cart deleted successfully')
+  );
+});
