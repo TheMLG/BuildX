@@ -83,11 +83,46 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation;
+  }
+
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+    /* Prevent iOS zoom on focus — keep font-size at least 16px */
+    font-size: max(16px, 1em);
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pb-safe-offset-3 {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-safe-offset-4 {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mb-safe-bar {
+    margin-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
 

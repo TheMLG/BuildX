@@ -13,21 +13,22 @@ const CartHeader = ({ cartId, isConnected }: CartHeaderProps) => (
       </div>
       <div>
         <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground">SmartCart</h1>
-        <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">{cartId}</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground font-medium font-mono">{cartId}</p>
       </div>
     </div>
 
-    <div className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-secondary px-2 py-1 sm:px-3 sm:py-1.5">
+    <div className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-secondary px-2.5 py-1 sm:px-3 sm:py-1.5">
       <span
-        className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${
+        className={`h-2 w-2 rounded-full shrink-0 ${
           isConnected ? "bg-success animate-pulse-dot" : "bg-muted-foreground"
         }`}
       />
-      <span className="text-[10px] sm:text-xs font-medium text-muted-foreground hidden xs:inline">
-        {isConnected ? "Connected" : "Offline"}
+      <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">
+        {isConnected ? "Live" : "Offline"}
       </span>
     </div>
   </header>
 );
 
 export default CartHeader;
+

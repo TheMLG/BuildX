@@ -254,7 +254,7 @@ const OrderSummaryPage = () => {
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
-            className="shrink-0"
+            className="shrink-0 h-10 w-10"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -262,7 +262,7 @@ const OrderSummaryPage = () => {
             <h1 className="text-base font-semibold leading-tight">Order Summary</h1>
             <p className="text-xs text-muted-foreground">Review your items before paying</p>
           </div>
-          <Badge variant="secondary" className="ml-auto">
+          <Badge variant="secondary" className="ml-auto text-xs">
             {itemCount} {itemCount === 1 ? "item" : "items"}
           </Badge>
         </div>
@@ -349,7 +349,7 @@ const OrderSummaryPage = () => {
         </div>
 
         {/* Pay Button */}
-        <div className="pt-2 pb-8">
+        <div className="pt-2 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
           <Button
             size="lg"
             className="w-full text-base font-semibold h-14 rounded-xl shadow-md"

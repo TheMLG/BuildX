@@ -14,19 +14,19 @@ const OrderSummary = ({ subtotal, itemCount, onCheckout }: OrderSummaryProps) =>
     <div className="rounded-2xl md:bg-card md:p-6 md:shadow-card animate-fade-in">
       {/* Mobile: Compact horizontal layout */}
       <div className="md:hidden">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex-1">
-            <div className="flex items-baseline gap-2 mb-1">
+            <div className="flex items-baseline gap-2 mb-0.5">
               <span className="text-xs text-muted-foreground">Total</span>
               <span className="text-xl font-bold text-primary">₹{total.toFixed(2)}</span>
             </div>
             <p className="text-[10px] text-muted-foreground">
-              {itemCount} items • Tax: ₹{tax.toFixed(2)}
+              {itemCount} items • Incl. tax ₹{tax.toFixed(2)}
             </p>
           </div>
           <button 
             onClick={onCheckout}
-            className="ml-3 rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-soft transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
+            className="ml-3 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-all duration-200 hover:opacity-90 active:scale-[0.97] min-w-[110px]"
           >
             Checkout
           </button>

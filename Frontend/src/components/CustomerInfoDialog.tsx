@@ -78,7 +78,7 @@ const CustomerInfoDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-[420px] rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl">Customer Details</DialogTitle>
           <DialogDescription>
@@ -149,12 +149,13 @@ const CustomerInfoDialog = ({
           </div>
         </form>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 pt-2">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
+            className="flex-1 sm:flex-none"
           >
             Cancel
           </Button>
@@ -162,7 +163,7 @@ const CustomerInfoDialog = ({
             type="submit"
             form="customer-info-form"
             disabled={isLoading}
-            className="min-w-[130px]"
+            className="flex-1 sm:flex-none min-w-[130px]"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">

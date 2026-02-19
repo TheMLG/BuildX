@@ -97,15 +97,15 @@ const CheckoutDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-[600px] max-h-[85dvh] flex flex-col p-0 rounded-2xl">
+        <DialogHeader className="px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
           <DialogTitle>Checkout</DialogTitle>
           <DialogDescription>
             Review your order and enter your details to proceed with payment.
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 px-6">
+        <ScrollArea className="flex-1 px-5 sm:px-6">
           <form onSubmit={handleSubmit} id="checkout-form">
             {/* Product List Section */}
             <div className="mb-6">
@@ -211,12 +211,13 @@ const CheckoutDialog = ({
           </form>
         </ScrollArea>
         
-        <DialogFooter className="px-6 pb-6 pt-4">
+        <DialogFooter className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6 gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
+            className="flex-1 sm:flex-none"
           >
             Cancel
           </Button>
@@ -224,7 +225,7 @@ const CheckoutDialog = ({
             type="submit" 
             form="checkout-form"
             disabled={isLoading}
-            className="min-w-[120px]"
+            className="flex-1 sm:flex-none min-w-[120px]"
           >
             {isLoading ? "Processing..." : "Pay Now"}
           </Button>

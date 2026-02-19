@@ -146,7 +146,7 @@ const OrderConfirmation = () => {
   const tax = order.totalAmount - subtotal;
 
   return (
-    <div className="min-h-screen bg-muted/30 py-6 px-4">
+    <div className="min-h-screen bg-muted/30 py-6 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
       <div className="max-w-2xl mx-auto space-y-4">
 
         {/* ── Security Guard Alert ─────────────────────────────── */}
@@ -229,36 +229,46 @@ const OrderConfirmation = () => {
                 </div>
               </div>
 
-              {/* Items Table */}
+              {/* Items List — mobile-friendly card rows instead of a table */}
               <div className="px-6 py-4 border-b border-border">
                 <div className="flex items-center gap-2 mb-3">
                   <Package className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-semibold">Items</span>
                 </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-muted-foreground border-b border-border">
-                      <th className="text-left pb-2 font-medium">Product</th>
-                      <th className="text-center pb-2 font-medium">Qty</th>
-                      <th className="text-right pb-2 font-medium">Rate</th>
-                      <th className="text-right pb-2 font-medium">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {order.items.map((item, i) => (
-                      <tr key={i} className="border-b border-border/50 last:border-0">
-                        <td className="py-2.5 font-medium">{item.name}</td>
-                        <td className="py-2.5 text-center text-muted-foreground">{item.quantity}</td>
-                        <td className="py-2.5 text-right text-muted-foreground">
-                          ₹{item.price.toFixed(2)}
-                        </td>
-                        <td className="py-2.5 text-right font-medium">
+
+                {/* Header row — hidden on mobile, visible on sm+ */}
+                <div className="hidden sm:grid sm:grid-cols-[1fr_auto_auto_auto] gap-x-4 text-xs text-muted-foreground border-b border-border pb-2 mb-1 font-medium">
+                  <span>Product</span>
+                  <span className="text-center">Qty</span>
+                  <span className="text-right">Rate</span>
+                  <span className="text-right">Amount</span>
+                </div>
+
+                <div className="divide-y divide-border/50">
+                  {order.items.map((item, i) => (
+                    <div key={i} className="py-2.5">
+                      {/* Mobile: 2-line layout */}
+                      <div className="flex justify-between items-start gap-3 sm:hidden">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm leading-tight">{item.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            ₹{item.price.toFixed(2)} × {item.quantity}
+                          </p>
+                        </div>
+                        <span className="font-semibold text-sm shrink-0">
                           ₹{(item.price * item.quantity).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </span>
+                      </div>
+                      {/* Desktop: grid row layout */}
+                      <div className="hidden sm:grid sm:grid-cols-[1fr_auto_auto_auto] gap-x-4 text-sm items-center">
+                        <span className="font-medium">{item.name}</span>
+                        <span className="text-center text-muted-foreground">{item.quantity}</span>
+                        <span className="text-right text-muted-foreground">₹{item.price.toFixed(2)}</span>
+                        <span className="text-right font-medium">₹{(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Price Breakdown */}

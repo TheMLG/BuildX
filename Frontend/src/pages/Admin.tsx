@@ -20,6 +20,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface Product {
   _id: string;
@@ -44,11 +46,47 @@ interface ProductFormData {
   nfcTagId: string;
 }
 
+interface CustomerInfo {
+  name: string;
+  email: string;
+  phone: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+}
+
+interface PaymentInfo {
+  method: string;
+  status: string;
+  transactionId?: string;
+}
+
+interface Order {
+  _id: string;
+  orderId: string;
+  cartId: string;
+  subtotal: number;
+  tax: number;
+  totalAmount: number;
+  customerInfo: CustomerInfo;
+  paymentInfo: PaymentInfo;
+  status: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -75,6 +113,7 @@ const Admin = () => {
     if (loggedIn === "true") {
       setIsAuthenticated(true);
       fetchProducts();
+      fetchOrders();
     }
   }, []);
 
@@ -89,6 +128,7 @@ const Admin = () => {
         description: "Logged in successfully",
       });
       fetchProducts();
+      fetchOrders();
     } else {
       toast({
         title: "Error",
@@ -127,6 +167,49 @@ const Admin = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const response = await fetch(`${apiUrl}/api/orders?limit=100`);
+      const result = await response.json();
+
+      if (result.success) {
+        setOrders(result.data.orders);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch orders",
+        variant: "destructive",
+      });
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/orders/${orderId}/download-bill`);
+      if (!response.ok) throw new Error("Failed to download invoice");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Invoice_${orderId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to download invoice",
+        variant: "destructive",
+      });
     }
   };
 
@@ -348,6 +431,14 @@ const Admin = () => {
           </div>
         </div>
 
+        <Tabs defaultValue="products">
+          <TabsList className="mb-6">
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+          </TabsList>
+
+          {/* ───────── PRODUCTS TAB ───────── */}
+          <TabsContent value="products">
         <Card className="mb-6">
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -501,6 +592,93 @@ const Admin = () => {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+
+          {/* ───────── ORDERS TAB ───────── */}
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Orders</CardTitle>
+                    <CardDescription>Customer orders and invoice downloads</CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={fetchOrders} disabled={ordersLoading}>
+                    {ordersLoading ? "Refreshing..." : "Refresh"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {ordersLoading && orders.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">Loading orders...</p>
+                ) : orders.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">No orders found.</p>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Order ID</TableHead>
+                          <TableHead>Customer Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Payment</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Invoice</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {orders.map((order) => (
+                          <TableRow key={order._id}>
+                            <TableCell className="font-mono text-xs">{order.orderId}</TableCell>
+                            <TableCell className="font-medium">{order.customerInfo.name}</TableCell>
+                            <TableCell>{order.customerInfo.email}</TableCell>
+                            <TableCell>{order.customerInfo.phone}</TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </TableCell>
+                            <TableCell>₹{order.totalAmount.toFixed(2)}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  order.paymentInfo.status === "completed"
+                                    ? "default"
+                                    : order.paymentInfo.status === "failed"
+                                    ? "destructive"
+                                    : "secondary"
+                                }
+                              >
+                                {order.paymentInfo.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{order.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadInvoice(order.orderId)}
+                              >
+                                Download
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="max-w-md">

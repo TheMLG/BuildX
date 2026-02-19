@@ -30,7 +30,7 @@ const CartItemCard = ({ item, onUpdateQuantity, onRemove }: CartItemProps) => {
             </div>
             <button
               onClick={() => onRemove(item.id)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-95"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-95"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -39,25 +39,25 @@ const CartItemCard = ({ item, onUpdateQuantity, onRemove }: CartItemProps) => {
           <div className="flex items-center justify-between mt-2">
             <p className="text-sm font-medium text-primary">₹{item.price.toFixed(2)}</p>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => onUpdateQuantity(item.id, -1)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
+                className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
               >
                 <Minus className="h-4 w-4" />
               </button>
-              <span className="w-8 text-center text-sm font-semibold text-foreground">
+              <span className="w-7 text-center text-sm font-semibold text-foreground">
                 {item.quantity}
               </span>
               <button
                 onClick={() => onUpdateQuantity(item.id, 1)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
+                className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
               >
                 <Plus className="h-4 w-4" />
               </button>
             </div>
             
-            <p className="text-base font-bold text-foreground min-w-[60px] text-right">
+            <p className="text-base font-bold text-foreground min-w-[56px] text-right">
               ₹{(item.price * item.quantity).toFixed(2)}
             </p>
           </div>

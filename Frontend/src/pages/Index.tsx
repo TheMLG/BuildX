@@ -230,7 +230,7 @@ const Index = () => {
   }, [items]);
 
   return (
-    <div className="min-h-screen bg-background pb-[180px] md:pb-0">
+    <div className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
       <CartHeader cartId={currentCartId || "Loading..."} isConnected={true} />
 
       <main className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8">
@@ -282,7 +282,7 @@ const Index = () => {
 
           {/* Summary */}
           {!loading && items.length > 0 && (
-            <aside className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-sm p-3 shadow-lg md:relative md:border-0 md:bg-transparent md:backdrop-blur-none md:p-0 md:shadow-none lg:sticky lg:top-8 lg:self-start">
+            <aside className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-sm px-3 pt-3 pb-safe-offset-3 shadow-lg md:relative md:border-0 md:bg-transparent md:backdrop-blur-none md:p-0 md:shadow-none lg:sticky lg:top-8 lg:self-start">
               <OrderSummary 
                 subtotal={subtotal} 
                 itemCount={itemCount} 
