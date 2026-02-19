@@ -105,18 +105,96 @@ const Index = () => {
     fetchCart();
   }, [cartId]);
 
-  const updateQuantity = (id: string, delta: number) => {
+  const updateQuantity = async (id: string, delta: number) => {
+    const item = items.find((item) => item.id === id);
+    if (!item) return;
+
+    const newQuantity = item.quantity + delta;
+
+    // Optimistically update UI
     setItems((prev) =>
       prev
         .map((item) =>
-          item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
+          item.id === id ? { ...item, quantity: Math.max(0, newQuantity) } : item
         )
         .filter((item) => item.quantity > 0)
     );
+
+    try {
+      if (newQuantity <= 0) {
+        // Remove item if quantity becomes 0 or less
+        await fetch(`${API_URL}/api/cart/${currentCartId}/items/${id}`, {
+          method: "DELETE",
+        });
+        
+        toast({
+          title: "Item removed",
+          description: `${item.name} has been removed from your cart.`,
+        });
+      } else {
+        // Update quantity
+        const response = await fetch(`${API_URL}/api/cart/${currentCartId}/items/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ quantity: newQuantity }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update cart");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating cart:", error);
+      
+      // Revert optimistic update on error
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity - delta } : item
+        )
+      );
+
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update cart. Please try again.",
+      });
+    }
   };
 
-  const removeItem = (id: string) => {
+  const removeItem = async (id: string) => {
+    const item = items.find((item) => item.id === id);
+    if (!item) return;
+
+    // Optimistically update UI
     setItems((prev) => prev.filter((item) => item.id !== id));
+
+    try {
+      const response = await fetch(`${API_URL}/api/cart/${currentCartId}/items/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to remove item");
+      }
+
+      toast({
+        title: "Item removed",
+        description: `${item.name} has been removed from your cart.`,
+      });
+    } catch (error) {
+      console.error("Error removing item:", error);
+      
+      // Revert optimistic update on error
+      setItems((prev) => [...prev, item]);
+
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove item. Please try again.",
+      });
+    }
   };
 
   const handleCheckoutClick = () => {
