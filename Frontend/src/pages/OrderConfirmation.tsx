@@ -1,8 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Package, User, Mail, Phone, Calendar, CreditCard } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  CheckCircle2,
+  Package,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  CreditCard,
+  Download,
+  Loader2,
+  ShieldCheck,
+  AlertCircle,
+  Home,
+} from "lucide-react";
+import { TAX_RATE } from "@/types/cart";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -38,6 +54,33 @@ const OrderConfirmation = () => {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const invoiceRef = useRef<HTMLDivElement>(null);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const { toast } = useToast();
+
+  const handleDownloadInvoice = async () => {
+    if (!orderId) return;
+    setDownloadingPDF(true);
+    try {
+      const response = await fetch(`${API_URL}/api/orders/${orderId}/download-bill`);
+      if (!response.ok) throw new Error("Failed to download invoice");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice_${orderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast({ title: "Downloaded", description: "Invoice saved successfully." });
+    } catch (err) {
+      console.error(err);
+      toast({ variant: "destructive", title: "Error", description: "Failed to download invoice. Please try again." });
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
 
   useEffect(() => {
     if (!orderId) {
@@ -70,9 +113,9 @@ const OrderConfirmation = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading order details...</p>
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground text-sm">Loading your invoice…</p>
         </div>
       </div>
     );
@@ -83,12 +126,14 @@ const OrderConfirmation = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle className="text-destructive">Error</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" /> Error
+            </CardTitle>
             <CardDescription>{error || "Order not found"}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={() => navigate("/")} className="w-full">
-              Go Home
+              <Home className="h-4 w-4 mr-2" /> Go Home
             </Button>
           </CardContent>
         </Card>
@@ -96,156 +141,179 @@ const OrderConfirmation = () => {
     );
   }
 
+  // Derived amounts
+  const subtotal = order.totalAmount / (1 + TAX_RATE);
+  const tax = order.totalAmount - subtotal;
+
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Success Header */}
-        <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-900">
-          <CardHeader className="text-center pb-4">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-              <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
-            </div>
-            <CardTitle className="text-2xl sm:text-3xl">Order Confirmed!</CardTitle>
-            <CardDescription className="text-base">
-              Thank you for your order. We've sent a confirmation to{" "}
-              <span className="font-medium">{order.customerInfo.email}</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <div className="inline-flex flex-col gap-1">
-              <span className="text-sm text-muted-foreground">Order Number</span>
-              <span className="text-lg font-mono font-semibold">{order.orderId}</span>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-muted/30 py-6 px-4">
+      <div className="max-w-2xl mx-auto space-y-4">
 
-        {/* Customer Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Customer Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="flex items-start gap-3">
-              <User className="h-4 w-4 mt-1 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Name</p>
-                <p className="font-medium">{order.customerInfo.name}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Mail className="h-4 w-4 mt-1 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium break-all">{order.customerInfo.email}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Phone className="h-4 w-4 mt-1 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
-                <p className="font-medium">{order.customerInfo.phone}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Order Date</p>
-                <p className="font-medium">
-                  {new Date(order.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* ── Security Guard Alert ─────────────────────────────── */}
+        <div className="flex items-start gap-3 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-600 p-4 shadow-sm">
+          <ShieldCheck className="h-6 w-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-amber-800 dark:text-amber-300 text-sm">
+              Show this invoice to the security guard before exiting
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+              Your digital invoice serves as proof of purchase. Present it at the exit gate.
+            </p>
+          </div>
+        </div>
 
-        {/* Order Items */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Order Items
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {order.items.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center py-3 border-b last:border-b-0"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Quantity: {item.quantity}
-                    </p>
+        {/* ── Invoice Card (printable area) ─────────────────────── */}
+        <div ref={invoiceRef}>
+          {/* Header */}
+          <Card className="overflow-hidden">
+            <div className="bg-gradient-to-r from-primary to-primary/80 px-6 py-5 text-primary-foreground">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight">BuildX Store</h1>
+                  <p className="text-xs opacity-80 mt-0.5">Tax Invoice / Receipt</p>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-1.5 justify-end mb-1">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span className="text-sm font-semibold">Payment Confirmed</span>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      ${item.price.toFixed(2)} each
-                    </p>
+                  <p className="text-xs opacity-80">
+                    {new Date(order.createdAt).toLocaleString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-white/20 flex flex-wrap gap-x-8 gap-y-1 text-xs">
+                <div>
+                  <span className="opacity-70">Order No.</span>
+                  <p className="font-mono font-semibold">{order.orderId}</p>
+                </div>
+                <div>
+                  <span className="opacity-70">Payment</span>
+                  <p className="capitalize font-medium">
+                    {order.paymentInfo.method} •{" "}
+                    <span className="bg-white/20 rounded px-1">{order.paymentInfo.status}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <CardContent className="p-0">
+              {/* Customer Info */}
+              <div className="px-6 py-4 border-b border-border grid sm:grid-cols-3 gap-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <User className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Name</p>
+                    <p className="font-medium">{order.customerInfo.name}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="flex items-start gap-2">
+                  <Mail className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p className="font-medium break-all">{order.customerInfo.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Phone className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p className="font-medium">{order.customerInfo.phone}</p>
+                  </div>
+                </div>
+              </div>
 
-            <div className="mt-6 pt-4 border-t space-y-2">
-              <div className="flex justify-between text-lg font-semibold">
-                <span>Total Amount</span>
-                <span className="text-primary">${order.totalAmount.toFixed(2)}</span>
+              {/* Items Table */}
+              <div className="px-6 py-4 border-b border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-semibold">Items</span>
+                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-muted-foreground border-b border-border">
+                      <th className="text-left pb-2 font-medium">Product</th>
+                      <th className="text-center pb-2 font-medium">Qty</th>
+                      <th className="text-right pb-2 font-medium">Rate</th>
+                      <th className="text-right pb-2 font-medium">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.items.map((item, i) => (
+                      <tr key={i} className="border-b border-border/50 last:border-0">
+                        <td className="py-2.5 font-medium">{item.name}</td>
+                        <td className="py-2.5 text-center text-muted-foreground">{item.quantity}</td>
+                        <td className="py-2.5 text-right text-muted-foreground">
+                          ₹{item.price.toFixed(2)}
+                        </td>
+                        <td className="py-2.5 text-right font-medium">
+                          ₹{(item.price * item.quantity).toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Payment Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Payment Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Payment Method</p>
-                <p className="font-medium capitalize">{order.paymentInfo.method}</p>
+              {/* Price Breakdown */}
+              <div className="px-6 py-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-semibold">Price Breakdown</span>
+                </div>
+                <div className="space-y-2 text-sm max-w-xs ml-auto">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>
+                      GST / Tax{" "}
+                      <span className="text-xs bg-muted rounded px-1">
+                        {(TAX_RATE * 100).toFixed(0)}%
+                      </span>
+                    </span>
+                    <span className="font-medium text-foreground">₹{tax.toFixed(2)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-base font-bold">
+                    <span>Total Paid</span>
+                    <span className="text-primary">₹{order.totalAmount.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Payment Status</p>
-                <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    order.paymentInfo.status === "paid"
-                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                  }`}
-                >
-                  {order.paymentInfo.status}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+        {/* ── /Invoice ─────────────────────────────────────────── */}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={() => navigate("/")} variant="outline" className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 pb-8">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => navigate("/")}
+          >
+            <Home className="h-4 w-4 mr-2" />
             Return to Home
           </Button>
           <Button
-            onClick={() => window.print()}
             variant="default"
-            className="flex-1"
+            className="flex-1 bg-primary"
+            onClick={handleDownloadInvoice}
+            disabled={downloadingPDF}
           >
-            Print Order
+            {downloadingPDF ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Downloading...</>
+            ) : (
+              <><Download className="h-4 w-4 mr-2" />Download Invoice</>
+            )}
           </Button>
         </div>
       </div>

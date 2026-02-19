@@ -9,6 +9,7 @@ import Test from "./pages/Test";
 import Admin from "./pages/Admin";
 import AdminCartQR from "./pages/AdminCartQR";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import OrderSummaryPage from "./pages/OrderSummaryPage";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/cart/:cartId" element={<Index />} />
           <Route path="/order/:orderId" element={<OrderConfirmation />} />
+          <Route path="/checkout/:cartId" element={<OrderSummaryPage />} />
           <Route path="/test" element={<Test />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/cart-qr" element={<AdminCartQR />} />

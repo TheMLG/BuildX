@@ -17,7 +17,6 @@ interface PaymentSuccessDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderId: string;
-  customerEmail: string;
   onViewOrder: () => void;
 }
 
@@ -25,7 +24,6 @@ const PaymentSuccessDialog = ({
   open,
   onOpenChange,
   orderId,
-  customerEmail,
   onViewOrder,
 }: PaymentSuccessDialogProps) => {
   const [downloadingPDF, setDownloadingPDF] = useState(false);
@@ -66,39 +64,6 @@ const PaymentSuccessDialog = ({
       setDownloadingPDF(false);
     }
   };
-
-  const handleSendEmail = async () => {
-    setSendingEmail(true);
-    try {
-      const response = await fetch(`${API_URL}/api/orders/${orderId}/email-bill`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to send email");
-      }
-
-      toast({
-        title: "Success",
-        description: `Invoice sent to ${customerEmail}`,
-      });
-    } catch (error) {
-      console.error("Error sending email:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to send invoice via email. Please try again.",
-      });
-    } finally {
-      setSendingEmail(false);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -139,24 +104,6 @@ const PaymentSuccessDialog = ({
               )}
             </Button>
 
-            <Button
-              onClick={handleSendEmail}
-              disabled={downloadingPDF || sendingEmail}
-              className="w-full"
-              variant="outline"
-            >
-              {sendingEmail ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send to Email ({customerEmail})
-                </>
-              )}
-            </Button>
           </div>
         </div>
 

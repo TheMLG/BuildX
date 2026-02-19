@@ -1,4 +1,4 @@
-import { TAX_RATE } from "@/data/cartData";
+import { TAX_RATE } from "@/types/cart";
 
 interface OrderSummaryProps {
   subtotal: number;
@@ -18,10 +18,10 @@ const OrderSummary = ({ subtotal, itemCount, onCheckout }: OrderSummaryProps) =>
           <div className="flex-1">
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-xs text-muted-foreground">Total</span>
-              <span className="text-xl font-bold text-primary">${total.toFixed(2)}</span>
+              <span className="text-xl font-bold text-primary">₹{total.toFixed(2)}</span>
             </div>
             <p className="text-[10px] text-muted-foreground">
-              {itemCount} items • Tax: ${tax.toFixed(2)}
+              {itemCount} items • Tax: ₹{tax.toFixed(2)}
             </p>
           </div>
           <button 
@@ -40,18 +40,18 @@ const OrderSummary = ({ subtotal, itemCount, onCheckout }: OrderSummaryProps) =>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotal ({itemCount} items)</span>
-            <span className="font-medium text-foreground">${subtotal.toFixed(2)}</span>
+            <span className="font-medium text-foreground">₹{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Tax ({(TAX_RATE * 100).toFixed(0)}%)</span>
-            <span className="font-medium text-foreground">${tax.toFixed(2)}</span>
+            <span className="font-medium text-foreground">₹{tax.toFixed(2)}</span>
           </div>
 
           <div className="my-4 h-px bg-border" />
 
           <div className="flex justify-between text-base">
             <span className="font-semibold text-foreground">Total</span>
-            <span className="text-xl font-bold text-primary">${total.toFixed(2)}</span>
+            <span className="text-xl font-bold text-primary">₹{total.toFixed(2)}</span>
           </div>
         </div>
 

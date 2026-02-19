@@ -1,5 +1,5 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { CartItem as CartItemType } from "@/data/cartData";
+import { CartItem as CartItemType } from "@/types/cart";
 
 interface CartItemProps {
   item: CartItemType;
@@ -37,7 +37,7 @@ const CartItemCard = ({ item, onUpdateQuantity, onRemove }: CartItemProps) => {
           </div>
           
           <div className="flex items-center justify-between mt-2">
-            <p className="text-sm font-medium text-primary">${item.price.toFixed(2)}</p>
+            <p className="text-sm font-medium text-primary">₹{item.price.toFixed(2)}</p>
             
             <div className="flex items-center gap-2">
               <button
@@ -58,7 +58,7 @@ const CartItemCard = ({ item, onUpdateQuantity, onRemove }: CartItemProps) => {
             </div>
             
             <p className="text-base font-bold text-foreground min-w-[60px] text-right">
-              ${(item.price * item.quantity).toFixed(2)}
+              ₹{(item.price * item.quantity).toFixed(2)}
             </p>
           </div>
         </div>
@@ -79,7 +79,7 @@ const CartItemCard = ({ item, onUpdateQuantity, onRemove }: CartItemProps) => {
             {item.category}
           </p>
           <h3 className="font-semibold text-card-foreground truncate">{item.name}</h3>
-          <p className="text-sm font-medium text-primary">${item.price.toFixed(2)}</p>
+          <p className="text-sm font-medium text-primary">₹{item.price.toFixed(2)}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ const CartItemCard = ({ item, onUpdateQuantity, onRemove }: CartItemProps) => {
         </div>
 
         <p className="w-20 text-right font-semibold text-foreground">
-          ${(item.price * item.quantity).toFixed(2)}
+          ₹{(item.price * item.quantity).toFixed(2)}
         </p>
 
         <button

@@ -467,7 +467,7 @@ const Admin = () => {
                       <TableRow key={product._id}>
                         <TableCell className="font-medium">{product.productId}</TableCell>
                         <TableCell>{product.name}</TableCell>
-                        <TableCell>${product.price.toFixed(2)}</TableCell>
+                        <TableCell>₹{product.price.toFixed(2)}</TableCell>
                         <TableCell>
                           <code className="bg-gray-100 px-2 py-1 rounded text-sm">
                             {product.nfcTagId}

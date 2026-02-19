@@ -236,7 +236,7 @@ const Test = () => {
                           </div>
                           <div className="flex items-center gap-3 mt-1">
                             <p className="text-xs text-gray-600">
-                              ${product.price.toFixed(2)}
+                              ₹{product.price.toFixed(2)}
                             </p>
                             <p className="text-xs text-gray-500">
                               Stock: {product.stock}

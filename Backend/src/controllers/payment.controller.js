@@ -4,6 +4,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import Order from '../models/Order.model.js';
+import Cart from '../models/Cart.model.js';
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({
@@ -70,8 +71,17 @@ export const verifyRazorpayPayment = asyncHandler(async (req, res) => {
   order.paymentInfo.razorpayOrderId = razorpay_order_id;
   order.paymentInfo.razorpayPaymentId = razorpay_payment_id;
   order.status = 'confirmed';
-  
+
   await order.save();
+
+  // Reset cart: clear all items and set status back to active
+  const cart = await Cart.findOne({ cartId: order.cartId });
+  if (cart) {
+    cart.items = [];
+    cart.totalAmount = 0;
+    cart.status = 'active';
+    await cart.save();
+  }
 
   res.status(200).json(
     new ApiResponse(200, order, 'Payment verified successfully')

@@ -8,7 +8,6 @@ import {
   deleteOrder,
   getOrdersByCustomer,
   downloadBillPDF,
-  emailBill,
 } from '../controllers/order.controller.js';
 
 const router = express.Router();
@@ -19,17 +18,15 @@ router.post('/', createOrder);
 // Get all orders
 router.get('/', getAllOrders);
 
+// Get orders by customer email (must be before /:orderId to avoid shadowing)
+router.get('/customer/:email', getOrdersByCustomer);
+
+// Download PDF bill (two-segment path, not shadowed by /:orderId)
+router.get('/:orderId/download-bill', downloadBillPDF);
+
 // Get order by orderId
 router.get('/:orderId', getOrderById);
 
-// Get orders by customer email
-router.get('/customer/:email', getOrdersByCustomer);
-
-// Download PDF bill
-router.get('/:orderId/download-bill', downloadBillPDF);
-
-// Send bill via email
-router.post('/:orderId/email-bill', emailBill);
 
 // Update order status
 router.patch('/:orderId/status', updateOrderStatus);

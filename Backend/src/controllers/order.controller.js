@@ -4,7 +4,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { generateBillPDF } from '../utils/pdfGenerator.js';
-import { sendBillEmail } from '../utils/emailService.js';
+import { TAX_RATE } from '../utils/constants.js';
 
 // Create order from cart
 export const createOrder = asyncHandler(async (req, res) => {
@@ -28,12 +28,19 @@ export const createOrder = asyncHandler(async (req, res) => {
   // Generate unique order ID
   const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
+  // Calculate subtotal, tax, and total
+  const subtotal = cart.totalAmount; // Cart stores subtotal
+  const tax = subtotal * TAX_RATE;
+  const totalAmount = subtotal + tax;
+
   // Create order
   const order = await Order.create({
     orderId,
     cartId,
     items: cart.items,
-    totalAmount: cart.totalAmount,
+    subtotal,
+    tax,
+    totalAmount,
     customerInfo,
     paymentInfo,
     notes: notes || '',
@@ -203,41 +210,5 @@ export const downloadBillPDF = asyncHandler(async (req, res) => {
 
   // Generate PDF and pipe to response
   await generateBillPDF(order, res);
-});
-
-// Send bill via email
-export const emailBill = asyncHandler(async (req, res) => {
-  const { orderId } = req.params;
-
-  if (!orderId) {
-    throw new ApiError(400, 'Order ID is required');
-  }
-
-  const order = await Order.findOne({ orderId });
-
-  if (!order) {
-    throw new ApiError(404, 'Order not found');
-  }
-
-  // Generate PDF in memory
-  const chunks = [];
-  const { Writable } = await import('stream');
-  
-  const bufferStream = new Writable({
-    write(chunk, encoding, callback) {
-      chunks.push(chunk);
-      callback();
-    },
-  });
-
-  await generateBillPDF(order, bufferStream);
-  const pdfBuffer = Buffer.concat(chunks);
-
-  // Send email with PDF attachment
-  await sendBillEmail(order, pdfBuffer);
-
-  res.status(200).json(
-    new ApiResponse(200, null, `Bill sent successfully to ${order.customerInfo.email}`)
-  );
 });
 
