@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import CartHeader from "@/components/CartHeader";
 import CartItemCard from "@/components/CartItemCard";
@@ -53,6 +53,8 @@ const Index = () => {
   const [paymentSuccessDialogOpen, setPaymentSuccessDialogOpen] = useState(false);
   const [completedOrderId, setCompletedOrderId] = useState<string>("");
   const [customerEmail, setCustomerEmail] = useState<string>("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const previousItemsCountRef = useRef<number>(0);
 
   // If no cartId in URL, show error message
   useEffect(() => {
@@ -66,8 +68,12 @@ const Index = () => {
   useEffect(() => {
     if (!cartId) return;
 
-    const fetchCart = async () => {
-      setLoading(true);
+    const fetchCart = async (isPolling = false) => {
+      if (!isPolling) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
       setError(null);
       
       try {
@@ -92,18 +98,44 @@ const Index = () => {
             category: "Product", // Default category
           }));
           
+          // Check if items have changed (new items added)
+          if (isPolling && transformedItems.length > previousItemsCountRef.current) {
+            toast({
+              title: "Cart Updated",
+              description: "New items have been added to your cart!",
+            });
+          }
+          
+          previousItemsCountRef.current = transformedItems.length;
           setItems(transformedItems);
         }
       } catch (err) {
         console.error("Error fetching cart:", err);
-        setError(err instanceof Error ? err.message : "Failed to load cart");
+        if (!isPolling) {
+          setError(err instanceof Error ? err.message : "Failed to load cart");
+        }
       } finally {
-        setLoading(false);
+        if (!isPolling) {
+          setLoading(false);
+        } else {
+          setIsRefreshing(false);
+        }
       }
     };
 
-    fetchCart();
-  }, [cartId]);
+    // Initial fetch
+    fetchCart(false);
+
+    // Set up polling interval (refresh every 3 seconds)
+    const pollingInterval = setInterval(() => {
+      fetchCart(true);
+    }, 3000);
+
+    // Cleanup interval on unmount or cartId change
+    return () => {
+      clearInterval(pollingInterval);
+    };
+  }, [cartId, toast]);
 
   const updateQuantity = async (id: string, delta: number) => {
     const item = items.find((item) => item.id === id);
@@ -365,9 +397,17 @@ const Index = () => {
           {/* Items */}
           <section>
             <div className="mb-3 md:mb-4 flex items-center justify-between">
-              <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Cart Items
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Cart Items
+                </h2>
+                {!loading && (
+                  <div className="flex items-center gap-1.5">
+                    <div className={`h-2 w-2 rounded-full ${isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`} />
+                    <span className="text-[10px] text-muted-foreground">Live</span>
+                  </div>
+                )}
+              </div>
               {!loading && items.length > 0 && (
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 sm:px-2.5 text-[10px] sm:text-xs font-semibold text-primary">
                   {itemCount} items
