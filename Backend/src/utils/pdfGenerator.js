@@ -27,11 +27,11 @@ export const generateBillPDF = (order, stream) => {
 
       // Company name
       doc.fillColor(WHITE).fontSize(26).font('Helvetica-Bold')
-         .text('Super Store', ML, 28, { lineBreak: false });
+         .text('Embedded Elite\'s Store', ML, 28, { lineBreak: false });
 
       // Company contact
       doc.fillColor(PRIMARY_MID).fontSize(9).font('Helvetica')
-         .text('store@sote.com  |  www.superstore.com', ML, 65, { lineBreak: false });
+         .text('store@embeddedelite.com  |  www.embeddedelite.com', ML, 65, { lineBreak: false });
 
       // "INVOICE" right side
       doc.fillColor(WHITE).fontSize(22).font('Helvetica-Bold')

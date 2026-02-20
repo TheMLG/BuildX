@@ -169,7 +169,7 @@ const OrderConfirmation = () => {
             <div className="bg-gradient-to-r from-primary to-primary/80 px-6 py-5 text-primary-foreground">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-xl font-bold tracking-tight">BuildX Store</h1>
+                  <h1 className="text-xl font-bold tracking-tight">Embedded Elite's Store</h1>
                   <p className="text-xs opacity-80 mt-0.5">Tax Invoice / Receipt</p>
                 </div>
                 <div className="text-right">

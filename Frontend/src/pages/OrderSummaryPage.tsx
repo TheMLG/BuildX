@@ -156,7 +156,7 @@ const OrderSummaryPage = () => {
         key: RAZORPAY_KEY_ID,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
-        name: "BuildX Store",
+        name: "Embedded Elite's Store",
         description: `Order ${createdOrder.orderId}`,
         order_id: razorpayOrder.id,
         handler: async function (response: any) {
