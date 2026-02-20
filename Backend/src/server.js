@@ -1,8 +1,6 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import ApiError from './utils/ApiError.js';
 import connectDB from './db/db.js';
 import cartRoutes from './routes/cart.routes.js';
 import orderRoutes from './routes/order.routes.js';
@@ -32,6 +30,9 @@ app.use('/api/products', productRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/nfc', nfcRoutes);
 app.use('/api/config', configRoutes);
+
+// Ping route for uptime monitoring
+app.get('/ping', (req, res) => res.status(200).send('pong'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
