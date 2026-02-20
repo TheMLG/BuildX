@@ -132,7 +132,7 @@ const OrderConfirmation = () => {
             <CardDescription>{error || "Order not found"}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/")} className="w-full">
+            <Button onClick={() => navigate(order?.cartId ? `/cart/${order.cartId}` : "/")} className="w-full">
               <Home className="h-4 w-4 mr-2" /> Go Home
             </Button>
           </CardContent>
@@ -308,10 +308,10 @@ const OrderConfirmation = () => {
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => navigate("/")}
+            onClick={() => navigate(order.cartId ? `/cart/${order.cartId}` : "/")}
           >
             <Home className="h-4 w-4 mr-2" />
-            Return to Home
+            Return to Cart
           </Button>
           <Button
             variant="default"

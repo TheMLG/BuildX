@@ -90,6 +90,14 @@ const Index = () => {
               description: "New items have been added to your cart!",
             });
           }
+
+          // Detect when cart was emptied after checkout/payment
+          if (isPolling && previousItemsCountRef.current > 0 && transformedItems.length === 0) {
+            toast({
+              title: "Payment Successful!",
+              description: "Your order has been placed and the cart has been cleared.",
+            });
+          }
           
           previousItemsCountRef.current = transformedItems.length;
           setItems(transformedItems);
